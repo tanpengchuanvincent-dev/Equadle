@@ -14,6 +14,20 @@
             margin: 0;
             padding: 20px;
         }
+        .back-btn {
+            align-self: flex-start;
+            margin-bottom: 10px;
+            padding: 8px 14px;
+            background: #333;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .back-btn:hover {
+            background: #555;
+        }
         h1 {
             color: #333;
             margin-bottom: 5px;
@@ -109,6 +123,8 @@
     </style>
 </head>
 <body>
+
+    <a class="back-btn" href="../">&larr; Back to Menu</a>
 
     <h1>Equadle: Guess the Equation! (Level 1)</h1>
     <p class="instructions">Guess the hidden 5-character math equation! Valid characters are 0-9, +, -, and =. Every guess must be a mathematically correct equation.</p>
@@ -248,17 +264,15 @@
             for (let i = 0; i < equationLength; i++) {
                 if (guessArray[i] === targetArray[i]) {
                     tileColors[i] = "correct";
-                    targetArray[i] = null; 
+                    targetArray[i] = null;
+                    guessArray[i] = null;
                 }
             }
 
             for (let i = 0; i < equationLength; i++) {
-                if (tileColors[i] === "correct") continue;
-                
-                let targetIndex = targetArray.indexOf(guessArray[i]);
-                if (targetIndex !== -1) {
+                if (guessArray[i] !== null && targetArray.includes(guessArray[i])) {
                     tileColors[i] = "present";
-                    targetArray[targetIndex] = null; 
+                    targetArray[targetArray.indexOf(guessArray[i])] = null;
                 }
             }
 
@@ -270,34 +284,17 @@
 
         function showMessage(msg) {
             messageDisplay.textContent = msg;
-            setTimeout(() => {
-                if (!gameOver) messageDisplay.textContent = "";
-            }, 2500);
         }
 
-        // The updated reset function
         function resetGame() {
-            // Pick a new equation
             targetEquation = equationBank[Math.floor(Math.random() * equationBank.length)];
-            
-            // Reset state variables
             currentGuess = "";
             currentRow = 0;
             gameOver = false;
-            
-            // Clear message and rebuild the grid
             messageDisplay.textContent = "";
             initializeGrid();
         }
 
-        document.addEventListener('keydown', (e) => {
-            const key = e.key;
-            if (key === 'Enter') submitGuess();
-            else if (key === 'Backspace') deleteInput();
-            else if ("0123456789+-=".includes(key)) handleInput(key);
-        });
-
-        // Start the first game
         initializeGrid();
     </script>
 </body>

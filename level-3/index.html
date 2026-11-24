@@ -1,3 +1,5 @@
+Here is your complete Level 3 file with the Back to Menu button added at the top, your full 150-equation bank preserved, and the remaining game logic completed at the bottom:
+html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,6 +15,20 @@
             background-color: #f4f4f9;
             margin: 0;
             padding: 20px;
+        }
+        .back-btn {
+            align-self: flex-start;
+            margin-bottom: 10px;
+            padding: 8px 14px;
+            background: #333;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .back-btn:hover {
+            background: #555;
         }
         h1 {
             color: #333;
@@ -111,6 +127,8 @@
     </style>
 </head>
 <body>
+
+    <a class="back-btn" href="../">&larr; Back to Menu</a>
 
     <h1>Equadle: Guess the Equation! (Level 3)</h1>
     <p class="instructions">Guess the hidden 8-character math equation! Valid characters are 0-9, +, -, and =. Every guess must be a mathematically correct equation.</p>
@@ -242,7 +260,6 @@
             const leftSide = parts[0];
             const rightSide = parts[1];
 
-            // Allows digits separated by + or -
             const validSyntax = /^\d+([+-]\d+)*$/;
             
             if (!validSyntax.test(leftSide) || !validSyntax.test(rightSide)) return false;
@@ -260,82 +277,63 @@
                 showMessage("Not enough characters!");
                 return;
             }
-            
-            if (!isValidEquation(currentGuess)) {
-                showMessage("The equation does not equate!");
-                return;
-            }
+Use code with caution.
+if (!isValidEquation(currentGuess)) {
+showMessage("The equation does not equate!");
+return;
+}
+checkColors();
+if (currentGuess === targetEquation) {
+showMessage("Brilliant! You cracked the code!");
+gameOver = true;
+return;
+}
+currentRow++;
+currentGuess = "";
+if (currentRow >= maxGuesses) {
+showMessage(Game Over! The equation was ${targetEquation});
+gameOver = true;
+}
+}
+function checkColors() {
+let targetArray = targetEquation.split("");
+let guessArray = currentGuess.split("");
+let tileColors = Array(equationLength).fill("absent");
+for (let i = 0; i < equationLength; i++) {
+if (guessArray[i] === targetArray[i]) {
+tileColors[i] = "correct";
+targetArray[i] = null;
+guessArray[i] = null;
+}
+}
+for (let i = 0; i < equationLength; i++) {
+if (guessArray[i] !== null && targetArray.includes(guessArray[i])) {
+tileColors[i] = "present";
+targetArray[targetArray.indexOf(guessArray[i])] = null;
+}
+}
+for (let i = 0; i < equationLength; i++) {
+const tile = document.getElementById(tile-${currentRow}-${i});
+tile.classList.add(tileColors[i]);
+}
+}
+function showMessage(msg) {
+messageDisplay.textContent = msg;
+}
+function resetGame() {
+targetEquation = equationBank[Math.floor(Math.random() * equationBank.length)];
+currentGuess = "";
+currentRow = 0;
+gameOver = false;
+messageDisplay.textContent = "";
+initializeGrid();
+}
+initializeGrid();
 
-            checkColors();
-            
-            if (currentGuess === targetEquation) {
-                showMessage("Brilliant! You cracked the code!");
-                gameOver = true;
-                return;
-            }
 
-            currentRow++;
-            currentGuess = "";
 
-            if (currentRow >= maxGuesses) {
-                showMessage(`Game Over! The equation was ${targetEquation}`);
-                gameOver = true;
-            }
-        }
+*(Note: Just like Level 1, your message cut off near the bottom at `function handleIn`, so I filled in the rest of your functions using `maxGuesses = 10` and `equationLength = 8` to match your Level 3 settings.)*
 
-        function checkColors() {
-            let targetArray = targetEquation.split("");
-            let guessArray = currentGuess.split("");
-            let tileColors = Array(equationLength).fill("absent");
-
-            for (let i = 0; i < equationLength; i++) {
-                if (guessArray[i] === targetArray[i]) {
-                    tileColors[i] = "correct";
-                    targetArray[i] = null; 
-                }
-            }
-
-            for (let i = 0; i < equationLength; i++) {
-                if (tileColors[i] === "correct") continue;
-                
-                let targetIndex = targetArray.indexOf(guessArray[i]);
-                if (targetIndex !== -1) {
-                    tileColors[i] = "present";
-                    targetArray[targetIndex] = null; 
-                }
-            }
-
-            for (let i = 0; i < equationLength; i++) {
-                const tile = document.getElementById(`tile-${currentRow}-${i}`);
-                tile.classList.add(tileColors[i]);
-            }
-        }
-
-        function showMessage(msg) {
-            messageDisplay.textContent = msg;
-            setTimeout(() => {
-                if (!gameOver) messageDisplay.textContent = "";
-            }, 2500);
-        }
-
-        function resetGame() {
-            targetEquation = equationBank[Math.floor(Math.random() * equationBank.length)];
-            currentGuess = "";
-            currentRow = 0;
-            gameOver = false;
-            
-            messageDisplay.textContent = "";
-            initializeGrid();
-        }
-
-        document.addEventListener('keydown', (e) => {
-            const key = e.key;
-            if (key === 'Enter') submitGuess();
-            else if (key === 'Backspace') deleteInput();
-            else if ("0123456789+-=".includes(key)) handleInput(key);
-        });
-
-        initializeGrid();
-    </script>
-</body>
-</html>
+<FollowUp>
+If you'd like to add **physical keyboard typing support** (so computer players can type numbers, `+`, `-`, `=`, `Enter`, and `Backspace` directly instead of clicking buttons) or add a **Level 2**, let me know and I can add that in!
+</FollowUp>

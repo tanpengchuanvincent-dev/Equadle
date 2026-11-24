@@ -1,1 +1,341 @@
- 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equadle: Guess the Equation! (Level 3)</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        p.instructions {
+            color: #666;
+            margin-bottom: 15px;
+            text-align: center;
+            max-width: 500px;
+        }
+        
+        #reset-btn {
+            background-color: #2196F3; 
+            color: white; 
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #reset-btn:hover {
+            background-color: #1976D2;
+        }
+
+        .grid {
+            display: grid;
+            /* 10 guesses */
+            grid-template-rows: repeat(10, 1fr);
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        .row {
+            display: grid;
+            /* 8 characters long */
+            grid-template-columns: repeat(8, 1fr);
+            gap: 5px;
+        }
+        .tile {
+            width: 45px;
+            height: 45px;
+            border: 2px solid #ccc;
+            font-size: 26px;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: white;
+            text-transform: uppercase;
+        }
+        .keyboard {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .key-row {
+            display: flex;
+            gap: 6px;
+        }
+        button {
+            padding: 10px 15px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            background-color: #e0e0e0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #ccc;
+        }
+        .action-btn {
+            color: white;
+        }
+        /* Colors for feedback */
+        .correct { background-color: #6aaa64; color: white; border-color: #6aaa64; }
+        .present { background-color: #c9b458; color: white; border-color: #c9b458; }
+        .absent { background-color: #787c7e; color: white; border-color: #787c7e; }
+        
+        #message {
+            margin-top: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            height: 24px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Equadle: Guess the Equation! (Level 3)</h1>
+    <p class="instructions">Guess the hidden 8-character math equation! Valid characters are 0-9, +, -, and =. Every guess must be a mathematically correct equation.</p>
+
+    <button id="reset-btn" onclick="resetGame()">RESTART PUZZLE</button>
+
+    <div class="grid" id="grid"></div>
+    <div id="message"></div>
+
+    <div class="keyboard" id="keyboard">
+        <div class="key-row">
+            <button onclick="handleInput('1')">1</button>
+            <button onclick="handleInput('2')">2</button>
+            <button onclick="handleInput('3')">3</button>
+            <button onclick="handleInput('4')">4</button>
+            <button onclick="handleInput('5')">5</button>
+            <button onclick="handleInput('6')">6</button>
+            <button onclick="handleInput('7')">7</button>
+            <button onclick="handleInput('8')">8</button>
+            <button onclick="handleInput('9')">9</button>
+            <button onclick="handleInput('0')">0</button>
+        </div>
+        <div class="key-row">
+            <button onclick="handleInput('+')">+</button>
+            <button onclick="handleInput('-')">-</button>
+            <button onclick="handleInput('=')">=</button>
+        </div>
+        <div class="key-row">
+            <button class="action-btn" onclick="submitGuess()" style="background-color: #4CAF50;">ENTER</button>
+            <button class="action-btn" onclick="deleteInput()" style="background-color: #f44336;">DELETE</button>
+        </div>
+    </div>
+
+    <script>
+        // Custom 150 Equation Bank for Level 3
+        const equationBank = [
+            // 30 Addition Equations (XX+YY=ZZ)
+            "10+10=20", "11+11=22", "12+12=24", "13+13=26", "14+14=28",
+            "15+15=30", "16+16=32", "17+17=34", "18+18=36", "19+19=38",
+            "20+20=40", "25+25=50", "30+30=60", "35+35=70", "40+40=80",
+            "45+45=90", "12+34=46", "23+45=68", "34+56=90", "21+43=64",
+            "15+20=35", "20+15=35", "30+45=75", "45+30=75", "50+25=75",
+            "25+50=75", "60+15=75", "15+60=75", "70+20=90", "20+70=90",
+
+            // 30 Subtraction Equations (XX-YY=ZZ)
+            "50-25=25", "60-30=30", "70-35=35", "80-40=40", "90-45=45",
+            "99-11=88", "88-22=66", "77-33=44", "66-44=22", "55-11=44",
+            "45-15=30", "75-25=50", "85-35=50", "95-45=50", "35-15=20",
+            "40-15=25", "50-15=35", "60-15=45", "70-15=55", "80-15=65",
+            "90-15=75", "55-25=30", "65-25=40", "75-45=30", "85-45=40",
+            "95-25=70", "95-55=40", "85-55=30", "75-55=20", "65-55=10",
+
+            // 20 Subtraction Equations (XXX-YY=Z)
+            "100-91=9", "100-92=8", "100-93=7", "100-94=6", "100-95=5",
+            "100-96=4", "100-97=3", "100-98=2", "100-99=1", "101-92=9",
+            "101-93=8", "101-94=7", "101-95=6", "101-96=5", "101-97=4",
+            "101-98=3", "101-99=2", "102-99=3", "102-98=4", "102-97=5",
+
+            // 40 Long Addition Equations (W+X+Y=ZZ)
+            "1+2+7=10", "2+3+5=10", "3+4+3=10", "4+5+1=10", "5+5+5=15",
+            "6+6+6=18", "7+7+7=21", "8+8+8=24", "9+9+9=27", "8+9+3=20",
+            "9+8+3=20", "7+8+5=20", "8+7+5=20", "6+5+9=20", "5+6+9=20",
+            "4+7+9=20", "7+4+9=20", "9+9+2=20", "9+2+9=20", "2+9+9=20",
+            "9+9+4=22", "9+9+5=23", "9+9+6=24", "9+9+7=25", "9+9+8=26",
+            "8+8+9=25", "8+9+8=25", "9+8+8=25", "7+7+9=23", "7+9+7=23",
+            "9+7+7=23", "6+6+9=21", "6+9+6=21", "9+6+6=21", "8+8+5=21",
+            "8+5+8=21", "5+8+8=21", "7+7+8=22", "7+8+7=22", "8+7+7=22",
+
+            // 15 Mixture Equations (WW-X+Y=Z)
+            "10-5+1=6", "10-6+2=6", "10-7+3=6", "10-8+4=6", "10-9+5=6",
+            "11-5+2=8", "11-6+3=8", "11-7+4=8", "11-8+5=8", "11-9+6=8",
+            "12-6+1=7", "12-7+2=7", "12-8+3=7", "12-9+4=7", "15-9+3=9",
+
+            // 15 Mixture Equations (W-X+Y=ZZ)
+            "9-1+2=10", "9-2+3=10", "9-3+4=10", "9-4+5=10", "9-5+6=10",
+            "8-1+3=10", "8-2+4=10", "8-3+5=10", "8-4+6=10", "8-5+7=10",
+            "7-1+4=10", "7-2+5=10", "7-3+6=10", "7-4+7=10", "7-5+8=10"
+        ];
+        
+        let targetEquation = equationBank[Math.floor(Math.random() * equationBank.length)];
+        
+        const maxGuesses = 10;
+        const equationLength = 8;
+        let currentGuess = "";
+        let currentRow = 0;
+        let gameOver = false;
+
+        const grid = document.getElementById('grid');
+        const messageDisplay = document.getElementById('message');
+
+        function initializeGrid() {
+            grid.innerHTML = ''; 
+            for (let i = 0; i < maxGuesses; i++) {
+                let row = document.createElement('div');
+                row.className = 'row';
+                for (let j = 0; j < equationLength; j++) {
+                    let tile = document.createElement('div');
+                    tile.className = 'tile';
+                    tile.id = `tile-${i}-${j}`;
+                    row.appendChild(tile);
+                }
+                grid.appendChild(row);
+            }
+        }
+
+        function handleInput(char) {
+            if (gameOver || currentGuess.length >= equationLength) return;
+            currentGuess += char;
+            updateGrid();
+        }
+
+        function deleteInput() {
+            if (gameOver || currentGuess.length === 0) return;
+            currentGuess = currentGuess.slice(0, -1);
+            updateGrid();
+        }
+
+        function updateGrid() {
+            for (let i = 0; i < equationLength; i++) {
+                const tile = document.getElementById(`tile-${currentRow}-${i}`);
+                tile.textContent = currentGuess[i] || "";
+            }
+        }
+
+        function isValidEquation(guessStr) {
+            const parts = guessStr.split('=');
+            if (parts.length !== 2) return false;
+
+            const leftSide = parts[0];
+            const rightSide = parts[1];
+
+            // Allows digits separated by + or -
+            const validSyntax = /^\d+([+-]\d+)*$/;
+            
+            if (!validSyntax.test(leftSide) || !validSyntax.test(rightSide)) return false;
+
+            try {
+                return eval(leftSide) === eval(rightSide);
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function submitGuess() {
+            if (gameOver) return;
+            if (currentGuess.length !== equationLength) {
+                showMessage("Not enough characters!");
+                return;
+            }
+            
+            if (!isValidEquation(currentGuess)) {
+                showMessage("The equation does not equate!");
+                return;
+            }
+
+            checkColors();
+            
+            if (currentGuess === targetEquation) {
+                showMessage("Brilliant! You cracked the code!");
+                gameOver = true;
+                return;
+            }
+
+            currentRow++;
+            currentGuess = "";
+
+            if (currentRow >= maxGuesses) {
+                showMessage(`Game Over! The equation was ${targetEquation}`);
+                gameOver = true;
+            }
+        }
+
+        function checkColors() {
+            let targetArray = targetEquation.split("");
+            let guessArray = currentGuess.split("");
+            let tileColors = Array(equationLength).fill("absent");
+
+            for (let i = 0; i < equationLength; i++) {
+                if (guessArray[i] === targetArray[i]) {
+                    tileColors[i] = "correct";
+                    targetArray[i] = null; 
+                }
+            }
+
+            for (let i = 0; i < equationLength; i++) {
+                if (tileColors[i] === "correct") continue;
+                
+                let targetIndex = targetArray.indexOf(guessArray[i]);
+                if (targetIndex !== -1) {
+                    tileColors[i] = "present";
+                    targetArray[targetIndex] = null; 
+                }
+            }
+
+            for (let i = 0; i < equationLength; i++) {
+                const tile = document.getElementById(`tile-${currentRow}-${i}`);
+                tile.classList.add(tileColors[i]);
+            }
+        }
+
+        function showMessage(msg) {
+            messageDisplay.textContent = msg;
+            setTimeout(() => {
+                if (!gameOver) messageDisplay.textContent = "";
+            }, 2500);
+        }
+
+        function resetGame() {
+            targetEquation = equationBank[Math.floor(Math.random() * equationBank.length)];
+            currentGuess = "";
+            currentRow = 0;
+            gameOver = false;
+            
+            messageDisplay.textContent = "";
+            initializeGrid();
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const key = e.key;
+            if (key === 'Enter') submitGuess();
+            else if (key === 'Backspace') deleteInput();
+            else if ("0123456789+-=".includes(key)) handleInput(key);
+        });
+
+        initializeGrid();
+    </script>
+</body>
+</html>
